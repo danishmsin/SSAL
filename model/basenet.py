@@ -134,3 +134,40 @@ class Discriminator(nn.Module):
         x = F.relu(self.fc2_1(x))
         x_out = F.sigmoid(self.fc3_1(x))
         return x_out
+
+class Predictor_attributes(nn.Module):
+    def __init__(self, num_class=64, inc=4096, temp=0.05, feat_dim = 50):
+        super(Predictor_attributes, self).__init__()
+        self.fc1 = nn.Linear(inc, feat_dim)
+        self.fc2 = nn.Linear(feat_dim,num_class, bias = False)
+        self.num_class = num_class
+        self.temp = temp
+
+    def forward(self, x, reverse=False, eta=0.1):
+        x = self.fc1(x)
+        if reverse:
+            x = grad_reverse(x, eta)
+#        x = self.fc1(x)
+        x = F.normalize(x)
+        x_out = self.fc2(x)/self.temp
+        return x_out
+
+class Predictor_deep_attributes(nn.Module):
+    def __init__(self, num_class=64, inc=4096, temp=0.05, feat_dim = 50):
+        super(Predictor_deep_attributes, self).__init__()
+        self.fc1 = nn.Linear(inc, 512)
+        self.fc2 = nn.Linear(512, feat_dim)
+        self.fc3 = nn.Linear(feat_dim,num_class, bias = False)
+        self.num_class = num_class
+        self.temp = temp
+
+    def forward(self, x, reverse=False, eta=0.1):
+        x = self.fc1(x)
+#        x = self.fc2(x)
+        if reverse:
+            x = grad_reverse(x, eta)
+#        x = self.fc1(x)
+        x = self.fc2(x)
+        x = F.normalize(x)
+        x_out = self.fc3(x)/self.temp
+        return x_out

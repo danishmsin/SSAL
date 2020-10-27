@@ -10,7 +10,7 @@ from model.resnet import resnet34
 from model.basenet import AlexNetBase, VGGBase, Predictor, Predictor_deep
 from utils.lr_schedule import inv_lr_scheduler
 from utils.utils import weights_init
-from utils.return_dataset import return_dataset_rot, return_dataset
+from utils.return_dataset import return_dataset_rot, return_dataset, return_dataset_rot_batch
 from utils.loss import entropy, adentropy
 
 # Training settings
@@ -54,7 +54,7 @@ parser.add_argument('--save_interval', type=int, default=500, metavar='N',
 args = parser.parse_args()
 all_step = args.step
 print('Dataset %s Target %s Network %s Num per class %s' % (args.dataset, args.target, args.net, str(args.num)))
-target_loader, target_loader_unl, class_list = return_dataset_rot(args)
+target_loader, target_loader_unl, class_list = return_dataset_rot_batch(args)
 
 len_target = len(target_loader)
 len_target_unl = len(target_loader_unl)
@@ -162,16 +162,18 @@ def train():
         data_t_unl = next(data_iter_t_unl)
 
         # Extracting data from the dataloader
-        im_data_t = data_t[0].cuda()
-        gt_labels_rot_t = data_t[1].cuda()
-        gt_labels_class_t = data_t[2].cuda()
+        im_data_t_stack = [data_t[0].cuda(),data_t[1].cuda(),data_t[2].cuda(),data_t[3].cuda()]
+        gt_labels_rot_t = data_t[4].cuda()
+        gt_labels_class_t = data_t[5].cuda()
         
-        im_data_t_unl = data_t[0].cuda()
-        gt_labels_rot_t_unl = data_t[1].cuda()
+        im_data_t_unl_stack = [data_t[0].cuda(),data_t[1].cuda(),data_t[2].cuda(),data_t[3].cuda()]
+        gt_labels_rot_t_unl = data_t[5].cuda()
         
         zero_grad_all()
         
         # Loss labeled classification
+        output = torch.tensor(0)
+        for 
         output = G(im_data_t)
         out_class = F1(output)
         loss_class = criterion(out_class, gt_labels_class_t)

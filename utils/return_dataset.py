@@ -1,7 +1,7 @@
 import os
 import torch
 from torchvision import transforms
-from loaders.data_list import Imagelists_VISDA, Imagelists_VISDA_rot, return_classlist
+from loaders.data_list import Imagelists_VISDA, Imagelists_VISDA_rot,Imagelists_VISDA_rot_batch, return_classlist
 import numpy as np
 
 class ResizeImage():
@@ -175,4 +175,75 @@ def return_dataset_rot(args):
     return target_loader, target_loader_unl, class_list
 
 
+def return_dataset_rot(args):
+    base_path = './data/txt/%s' % args.dataset
+    root = './data/%s/' % args.dataset
 
+    image_set_file_t = os.path.join(base_path, "labeled_target_images_%s_%s.txt"%(args.target,args.num))
+    image_set_file_t_unl = os.path.join(base_path, "unlabeled_target_images_%s_%s.txt"%(args.target,args.num))
+
+    if args.net == 'alexnet':
+        crop_size = 227
+    else:
+        crop_size = 224
+
+    data_transforms = {
+        'train': transforms.Compose([
+            ResizeImage(256),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomCrop(crop_size),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
+    }
+
+    target_dataset = Imagelists_VISDA_rot(image_set_file_t, root=root, transform=data_transforms['train'])
+    target_dataset_unl = Imagelists_VISDA_rot(image_set_file_t_unl, root=root, transform=data_transforms['train'])
+
+    if args.net == 'alexnet':
+        bs = 32
+    else:
+        bs = 24
+
+    target_loader = torch.utils.data.DataLoader(target_dataset, batch_size=min(bs, len(target_dataset)), num_workers=3, shuffle=True, drop_last=True)
+    target_loader_unl = torch.utils.data.DataLoader(target_dataset_unl, batch_size=bs*2, num_workers=3, shuffle=True, drop_last=True)
+
+    class_list = return_classlist(image_set_file_t_unl)
+    return target_loader, target_loader_unl, class_list
+
+
+def return_dataset_rot_batch(args):
+    base_path = './data/txt/%s' % args.dataset
+    root = './data/%s/' % args.dataset
+
+    image_set_file_t = os.path.join(base_path, "labeled_target_images_%s_%s.txt"%(args.target,args.num))
+    image_set_file_t_unl = os.path.join(base_path, "unlabeled_target_images_%s_%s.txt"%(args.target,args.num))
+
+    if args.net == 'alexnet':
+        crop_size = 227
+    else:
+        crop_size = 224
+
+    data_transforms = {
+        'train': transforms.Compose([
+            ResizeImage(256),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomCrop(crop_size),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
+    }
+
+    target_dataset = Imagelists_VISDA_rot_batch(image_set_file_t, root=root, transform=data_transforms['train'])
+    target_dataset_unl = Imagelists_VISDA_rot_batch(image_set_file_t_unl, root=root, transform=data_transforms['train'])
+
+    if args.net == 'alexnet':
+        bs = 32
+    else:
+        bs = 24
+
+    target_loader = torch.utils.data.DataLoader(target_dataset, batch_size=min(bs, len(target_dataset)), num_workers=3, shuffle=True, drop_last=True)
+    target_loader_unl = torch.utils.data.DataLoader(target_dataset_unl, batch_size=bs*2, num_workers=3, shuffle=True, drop_last=True)
+
+    class_list = return_classlist(image_set_file_t_unl)
+    return target_loader, target_loader_unl, class_list

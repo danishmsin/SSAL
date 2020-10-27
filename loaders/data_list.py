@@ -106,3 +106,38 @@ class Imagelists_VISDA_rot(object):
         img = self.transform(img)
         target = torch.tensor(int(rot_angle/90))
         return img, target, self.labels[index]
+
+
+class Imagelists_VISDA_rot_batch(object):
+    def __init__(self, image_list, root="./data/multi/",
+                 transform=None):
+        imgs, labels = make_dataset_fromlist(image_list)
+        self.imgs = imgs
+        self.labels = labels
+        self.transform = transform
+        self.loader = pil_loader
+        self.rotate  = rotate_img
+        self.root = root
+
+    def __len__(self):
+        return len(self.imgs)
+
+    def __getitem__(self, index):
+
+        path = os.path.join(self.root, self.imgs[index])
+        img = self.loader(path)
+        # Randomly select rotation angle and rotating the image
+        angles = [0,90,180,270]
+        rot_angle = random.choice(angles)
+        
+        im_stack = []
+        for angle in angles:
+            im_stack.append(self.rotate(img,angle))
+        im_stack_transform = []
+        for img in im_stack:
+            im_stack_transform.append(self.transform(img))
+        
+        target = torch.LongTensor([0, 1, 2, 3])
+        img_0, img_90, img_180, img_270 = im_stack_transform[0], im_stack_transform[1], im_stack_transform[2], im_stack_transform[3]
+        return img_0, img_90, img_180, img_270, target, self.labels[index]
+
